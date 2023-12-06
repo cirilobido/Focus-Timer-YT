@@ -15,11 +15,11 @@
 
 <img src="./preview/phone_dark.png" alt= "" width="280" height="500" title="Dark" />
 
-<img src="./preview/preview_green.png" alt= "" width="280" height="500" title="Green" />
+<img src="./preview/preview_green.jpg" alt= "" width="280" height="500" title="Green" />
 
-<img src="./preview/preview_red.png" alt= "" width="280" height="500" title="Red" />
+<img src="./preview/preview_red.jpg" alt= "" width="280" height="500" title="Red" />
 
-<img src="./preview/preview_blue.png" alt= "" width="280" height="500" title="Blue" />
+<img src="./preview/preview_blue.jpg" alt= "" width="280" height="500" title="Blue" />
 
 **Tablet Portrait Preview:**
 
