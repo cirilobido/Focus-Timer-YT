@@ -10,10 +10,10 @@ import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSiz
 import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import androidx.compose.ui.Modifier
 import com.cirilobido.focustimeryt.presentation.home.HomeScreen
-import com.cirilobido.focustimeryt.presentation.home.HomeScreenViewModel
 import com.cirilobido.focustimeryt.presentation.theme.FocusTimerYTTheme
+import dagger.hilt.android.AndroidEntryPoint
 
-internal val viewModel: HomeScreenViewModel = HomeScreenViewModel()
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -28,7 +28,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.surface
                 ) {
-                    HomeScreen(viewModel)
+                    HomeScreen()
                 }
             }
         }

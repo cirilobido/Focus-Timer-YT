@@ -9,10 +9,24 @@ import com.cirilobido.focustimeryt.core.Constants.Companion.ONE_HOUR_IN_MIN
 import com.cirilobido.focustimeryt.core.Constants.Companion.ONE_MIN_IN_MILLIS
 import com.cirilobido.focustimeryt.core.Constants.Companion.ONE_MIN_IN_SEC
 import com.cirilobido.focustimeryt.core.Constants.Companion.ONE_SEC_IN_MILLIS
+import com.cirilobido.focustimeryt.domain.model.Resource
+import com.cirilobido.focustimeryt.domain.model.TimerSessionModel
 import com.cirilobido.focustimeryt.domain.model.TimerTypeEnum
+import com.cirilobido.focustimeryt.domain.usecase.GetTimerSessionByDateUseCase
+import com.cirilobido.focustimeryt.domain.usecase.SaveTimerSessionUseCase
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import javax.inject.Inject
 
-class HomeScreenViewModel : ViewModel() {
+@HiltViewModel
+class HomeScreenViewModel @Inject constructor(
+    private val getTimerSessionByDateUseCase: GetTimerSessionByDateUseCase,
+    private val saveTimerSessionUseCase: SaveTimerSessionUseCase
+) : ViewModel() {
     private lateinit var timer: CountDownTimer
 
     private var isTimerActive: Boolean = false
@@ -29,6 +43,8 @@ class HomeScreenViewModel : ViewModel() {
     private val _todayTimeState = mutableStateOf<Long>(0)
     val todayTimeState = _todayTimeState
 
+    var _sessionTimerValue: Long = 0
+
     fun onStartTimer() {
         viewModelScope.launch {
             timer = object : CountDownTimer(
@@ -38,6 +54,7 @@ class HomeScreenViewModel : ViewModel() {
                 override fun onTick(millisUntilFinished: Long) {
                     _timerValue.value = millisUntilFinished
                     _todayTimeState.value += ONE_SEC_IN_MILLIS
+                    _sessionTimerValue += ONE_SEC_IN_MILLIS
                 }
 
                 override fun onFinish() {
@@ -46,6 +63,7 @@ class HomeScreenViewModel : ViewModel() {
             }
             timer.start().also {
                 if (!isTimerActive) _roundsState.value += 1
+                _sessionTimerValue = 0
                 isTimerActive = true
             }
         }
@@ -53,6 +71,7 @@ class HomeScreenViewModel : ViewModel() {
 
     fun onCancelTimer(reset: Boolean = false) {
         try {
+            saveTimerSession()
             timer.cancel()
         } catch (_: UninitializedPropertyAccessException) {
 //            Handle better the timer error
@@ -86,6 +105,39 @@ class HomeScreenViewModel : ViewModel() {
         if (_timerValue.value < 0) {
             onCancelTimer()
         }
+    }
+
+    fun getTimerSessionByDate() {
+        getTimerSessionByDateUseCase(date = getCurrentDate()).onEach { result ->
+            if (result is Resource.Success) {
+                _roundsState.value = result.data?.round ?: 0
+                _todayTimeState.value = result.data?.value ?: 0
+            }
+        }.launchIn(viewModelScope)
+    }
+
+    private fun saveTimerSession() {
+        val session = TimerSessionModel(
+            date = getCurrentDate(),
+            value = _sessionTimerValue
+        )
+        saveTimerSessionUseCase(timerSessionModel = session).onEach { result ->
+            when (result) {
+                is Resource.Success -> {
+                    _sessionTimerValue = 0
+                }
+
+                is Resource.Loading -> {}
+                is Resource.Error -> {}
+            }
+        }.launchIn(viewModelScope)
+    }
+
+    @SuppressLint("SimpleDateFormat")
+    private fun getCurrentDate(): String {
+        val currentDate = Calendar.getInstance().time
+        val formatter = SimpleDateFormat("dd-MMMM-yyyy")
+        return formatter.format(currentDate)
     }
 
     @SuppressLint("DefaultLocale")
